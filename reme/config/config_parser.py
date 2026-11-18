@@ -297,4 +297,18 @@ def resolve_app_config(*, log_config: bool = True, **kwargs) -> dict:
     for cfg in configs:
         merged = deep_merge_config(merged, cfg)
 
+    service = merged.get("service", {})
+    if service.get("native_settings"):
+        path = Path(config_value).expanduser().resolve() if isinstance(config_value, str) else None
+        if (
+            path is None
+            or not path.is_file()
+            or path.suffix not in _SUPPORTED_EXTS
+            or path.is_relative_to(_CONFIG_DIR.resolve())
+        ):
+            raise ValueError("Native settings require config=<user-owned YAML/JSON file>")
+        if service.get("backend") != "http" or not service.get("mcp_enabled", True):
+            raise ValueError("Native settings require the HTTP service with MCP enabled")
+        service["settings_file"] = str(path)
+
     return merged

@@ -48,6 +48,8 @@ class HttpService(BaseService):
         mcp_stateless_http: bool = False,
         injected_job_kwargs: dict[str, Any] | None = None,
         tool_error_on_failure: bool = False,
+        native_settings: bool = False,
+        settings_file: str | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -60,6 +62,8 @@ class HttpService(BaseService):
         self.mcp_stateless_http = mcp_stateless_http
         self.injected_job_kwargs = dict(injected_job_kwargs or {})
         self.tool_error_on_failure = tool_error_on_failure
+        self.native_settings = native_settings
+        self.settings_file = settings_file
         self.mcp_server = None
         self.mcp_app = None
 
@@ -72,7 +76,14 @@ class HttpService(BaseService):
             from fastmcp import FastMCP
             from fastmcp.utilities.lifespan import combine_lifespans
 
-            self.mcp_server = FastMCP(name=app.config.app_name)
+            from .native_settings import SETTINGS_CAPABILITY, add_native_settings
+
+            self.mcp_server = FastMCP(
+                name=app.config.app_name,
+                experimental_capabilities=SETTINGS_CAPABILITY if self.native_settings else None,
+            )
+            if self.native_settings:
+                add_native_settings(self.mcp_server, app, self.settings_file)
             self.mcp_app = self.mcp_server.http_app(
                 path=self.mcp_path,
                 transport="streamable-http",

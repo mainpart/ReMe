@@ -210,7 +210,7 @@ def recall(config: dict, payload: dict) -> dict:
             result = call(
                 config,
                 "search",
-                {"query": query.strip(), "limit": config["searchLimit"], "min_score": config["recallMinScore"]},
+                {"query": query.strip()},
                 config["requestTimeoutMs"] / 1000,
             )
             answer = result.get("answer")

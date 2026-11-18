@@ -1,7 +1,7 @@
 {
   "name": "reme",
-  "version": "0.2.8",
-  "description": "Automatic memory, focused recall, runtime status, and consolidation through ReMe MCP.",
+  "version": "0.3.0",
+  "description": "Automatic recall, conversation recording, and direct HTTP MCP tools for ReMe.",
   "author": {
     "name": "EconML team of Alibaba Tongyi Lab",
     "email": "jinli.yl@alibaba-inc.com"

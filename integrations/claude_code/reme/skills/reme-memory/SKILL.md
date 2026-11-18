@@ -12,7 +12,7 @@ memory consolidation. Use this skill for focused recall or connection troublesho
 ## Recall
 
 Use the ReMe MCP tools exposed by the host; discover the actual tool names instead of assuming a
-fixed namespace. Search with the user's question and `limit=5`, then `read` useful results by their
+fixed namespace. Search with the user's question, omitting `limit` and `min_score` to use server defaults, then `read` results by their
 workspace-relative `path`. Cite those paths. Prefer `digest/` for consolidated knowledge;
 `daily/` contains recent notes and `resource/` holds external materials.
 
@@ -29,9 +29,9 @@ mean the plugin is disabled, the MCP connection failed, or the server's job allo
 Check the plugin and `/mcp` status before concluding the service is stopped. The default service is
 started with `reme start workspace_dir=/absolute/path/to/workspace service.backend=http`.
 
-The host's `reme/config.json` supplies `mcp_url` and hook settings to both the MCP bridge and
-automatic hooks. Users can edit this file directly. Reconnect MCP after changing its address;
-hook changes apply on the next invocation. Content-free logs live in the host's `reme/` directory.
+The plugin connects directly to HTTP MCP. The host's `reme/config.json` supplies connection and
+capture settings to hooks only; the host MCP entry owns the model's connection address. Search
+defaults live in the server's `jobs.search` configuration, shared by hooks and explicit tool calls. Content-free logs live in the host's `reme/` directory.
 Hooks batch five completed turns by default;
 short batches flush at session boundaries, subject to a bounded shutdown budget. Failed batches
 remain for a later attempt. Do not manually submit the same conversation just because a background

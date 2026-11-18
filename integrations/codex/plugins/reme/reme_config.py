@@ -38,14 +38,14 @@ def data_dir() -> Path:
 
 
 def load_config() -> dict:
-    """Read the persistent settings shared by the MCP server and lifecycle hooks."""
+    """Read connection and capture settings for lifecycle hooks."""
     path = data_dir() / "config.json"
     values = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     return validate_config(values)
 
 
 def validate_config(values: dict) -> dict:
-    """Validate user overrides before the MCP server or hooks can use them."""
+    """Validate hook overrides, accepting old search and timer keys for compatibility."""
     if not isinstance(values, dict) or values.keys() - DEFAULTS.keys():
         raise ValueError("Unknown ReMe configuration fields")
     config = {**DEFAULTS, **values}
@@ -160,22 +160,3 @@ def write_json(path: Path, value: dict) -> None:
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
-
-
-def settings_values(config: dict) -> dict:
-    """Expose only editable settings, excluding the derived retry-directory identity."""
-    return {key: config[key] for key in DEFAULTS}
-
-
-def update_settings(changes: dict) -> dict:
-    """Validate and merge a UI patch under the same cross-process lock as other editors."""
-    if not isinstance(changes, dict) or not changes or changes.keys() - DEFAULTS.keys():
-        raise ValueError("Provide at least one supported ReMe setting")
-    with lock(data_dir() / "config.lock") as acquired:
-        if not acquired:
-            raise RuntimeError("Another settings update is in progress; please retry")
-        current = settings_values(load_config())
-        config = validate_config({**current, **changes})
-        values = settings_values(config)
-        write_json(data_dir() / "config.json", values)
-    return values

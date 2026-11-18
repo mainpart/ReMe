@@ -41,7 +41,10 @@ class DreamExtractStep(BaseStep):
         raw_max_units = self.context.get("max_units", self.max_units)
         max_units = max(int(raw_max_units or self.max_units), 0)
         dates = recent_dates(day, scan_days)
-        hint = str(self.context.get("hint", "") or "").strip()
+        default_hint = ""
+        if self.app_context is not None and (dream_job := self.app_context.jobs.get("auto_dream")):
+            default_hint = dream_job.kwargs.get("hint", "")
+        hint = str(self.context.get("hint", default_hint) or "").strip()
         daily, workspace = daily_dir(self), workspace_dir(self)
         if self.file_catalog is None:
             raise RuntimeError("dream_extract_step requires file_catalog")
