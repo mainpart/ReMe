@@ -37,6 +37,25 @@ _MALFORMED_EXTRACT_REPLY = (
 )
 
 
+@pytest.mark.parametrize("arguments,expected", [({}, "shared"), ({"hint": ""}, ""), ({"hint": "once"}, "once")])
+@pytest.mark.asyncio
+async def test_cron_extract_uses_server_hint_unless_overridden(tmp_path, arguments, expected):
+    """Scheduled and manual consolidation use the same server-owned hint."""
+    context = ApplicationContext(workspace_dir=str(tmp_path))
+    context.jobs["auto_dream"] = BaseJob(hint="shared")
+    step = DreamExtractStep(app_context=context, scan_days=1)
+    with patch("reme.steps.evolve.dream.extract.refresh_day_index", return_value={}):
+        response = await step(
+            RuntimeContext(
+                date="2026-05-28",
+                file_catalog=_Catalog(),
+                file_store=_FileStore(tmp_path),
+                **arguments,
+            ),
+        )
+    assert response.metadata["dream"]["hint"] == expected
+
+
 def _touch(path: Path, text: str = "x") -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")

@@ -11,7 +11,7 @@ source of truth. Automatic recall and recording depend on the user's settings an
 ## Recall
 
 Discover the ReMe MCP tools exposed by the host instead of assuming a fixed namespace. Use
-`reme_search` with a focused query; omit `limit` and `min_score` to use saved settings. Use `read`
+`search` with a focused query; omit `limit` and `min_score` to use saved settings. Use `read`
 with a workspace-relative `path` for more context. Cite source paths. `digest/` contains consolidated
 knowledge, `daily/` recent notes, and `resource/` external materials. Use `traverse` for relationships
 or `daily_list` for a specific day's notes.
@@ -23,17 +23,14 @@ For a date-bounded review, use `daily_list` with inclusive `start_date` and `end
 
 ## Status and recording
 
-Use `reme_status` for connection health, queued turns, recent
-recall/write activity, the daily schedule, next run, and last consolidation result. Local queue
-information remains available when ReMe is offline. The native **ReMe status** action opens a
-read-only panel with Refresh; the same tool also returns text for conversation/CLI use. Health does not establish Hook trust or prove
-memory was saved. Direct the user to Codex's Hooks settings to review every ReMe entry.
+Call `health_check`, `version`, and `status` to inspect the shared ReMe service. A healthy MCP
+connection does not prove that hooks are trusted or that a queued conversation was saved.
+Review ReMe entries in Codex's Hooks settings when automatic recall or recording is missing.
 
-Users configure the connection and memory options in the ReMe MCP server's native settings form.
-Use `reme_settings_read` when troubleshooting. Only change settings on the user's request; never
-enable recording to resolve an unrelated error. Relevant fields include `mcpUrl`, `autoRecall`,
-`autoMemoryEnabled`, `autoMemoryInterval`, `rootAgentsOnly`, `searchLimit`, `recallMinScore`,
-`language`, `timezone`, `autoDreamEnabled`, `dreamCron`, and `dreamHint`.
+When enabled on the server, `reme_settings_read` exposes shared search defaults and consolidation
+guidance. Only call `reme_settings_update` on the user's request. These tools edit ReMe's own
+configuration; local connection, recording, batching, and language options remain in the host's
+`reme/config.json`. No persistent local MCP process is required.
 
 With automatic recording enabled, Hooks capture completed user/assistant turns and deliver batches
 in the background. The default batch size is five. Session boundaries also attempt short batches;
@@ -50,16 +47,7 @@ produce MCP errors and pending writes are retained. Content-free local diagnosti
 
 ## Consolidation
 
-The daily timer runs while the ReMe MCP connection is alive, using `dreamCron` and `timezone`.
-Supported cron is `minute hour * * *`; the default is daily 23:00 in `Asia/Shanghai`. There is no
-catch-up after offline periods. `reme_status` reports actual timer state; do not invent a next run
-when it is stopped or updating. One Codex profile shares a scheduler across its MCP connections.
-Other profiles, machines, or a ReMe service timer are independent; use one scheduler per workspace.
-
-Only on explicit user request, call `reme_run_dream` to consolidate existing notes. It uses today's
-date in the saved timezone and `dreamHint`, unless overridden. The native form also provides
-**Consolidate now (updates memory files)**. Save edited settings before clicking an action, and
-wait for pending writes before consolidating newly recorded facts. Manual consolidation works with
-`autoDreamEnabled=false` and does not change the schedule. Concurrent manual/scheduled runs are
-serialized within this Codex profile. Disabling the timer or receiving a timeout does not prove
-that an already-submitted ReMe job has stopped; inspect service and memory state before retrying.
+Daily consolidation is owned by the ReMe service's `jobs.dream_cron`, using its timezone.
+There is no Codex scheduler. Do not create another schedule for the same workspace.
+Only on explicit user request, call `auto_dream`. Omit `date` and `hint` to use server defaults;
+explicit arguments override them. A timeout does not prove that the submitted job stopped.

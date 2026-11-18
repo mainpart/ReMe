@@ -44,7 +44,7 @@ def data_dir() -> Path:
 
 
 def load_config() -> dict:
-    """Read the same persistent settings used by the MCP bridge and lifecycle hooks."""
+    """Read connection and capture settings for lifecycle hooks."""
     path = data_dir() / "config.json"
     values = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     return validate_config(values)
@@ -325,11 +325,7 @@ def recall(config: dict, payload: dict) -> dict:
     result = call(
         config,
         "search",
-        {
-            "query": query.strip(),
-            "limit": config["recall_limit"],
-            "min_score": config["recall_min_score"],
-        },
+        {"query": query.strip()},
         config["recall_timeout"],
     )
     answer = result.get("answer")

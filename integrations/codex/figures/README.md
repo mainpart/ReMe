@@ -1,3 +1,5 @@
+> Historical captures of the 0.2.8 stdio adapter. The current HTTP integration has no local status panel; see the parent guide.
+
 # Codex manual screenshot workflow / 手动截图流程
 
 六张真实 Codex 截图已接入[中文使用指南](../README_ZH.md)和[English guide](../README.md)，

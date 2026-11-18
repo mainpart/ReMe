@@ -231,19 +231,17 @@ def test_native_manifests_resolve_within_their_own_plugin():
         assert (root / ".mcp.json").is_file()
         assert (root / "skills/reme-memory/SKILL.md").is_file()
         mcp = json.loads((root / ".mcp.json").read_text())["mcpServers"]["reme"]
-        assert mcp["command"] == "python3"
-        if host == "claude-code":
-            assert mcp["args"] == ["${CLAUDE_PLUGIN_ROOT}/hooks/mcp_bridge.py"]
-        elif host == "qoder":
+        if host == "qoder":
+            assert mcp["command"] == "python3"
             assert mcp["args"] == ["${QODER_PLUGIN_ROOT}/hooks/mcp_bridge.py"]
-        else:
-            assert mcp["args"] == ["mcp_server.py"]
-            assert (root / "mcp_server.py").is_file()
-            assert (root / manifest["hooks"]).is_file()
-            assert mcp["cwd"] == "."
-            assert "CODEX_HOME" in mcp["env_vars"]
-        if host in {"claude-code", "qoder"}:
             assert (root / "hooks/mcp_bridge.py").is_file()
+        else:
+            assert mcp["url"] == "http://127.0.0.1:2333/mcp"
+            assert "command" not in mcp and "args" not in mcp
+            if host == "claude-code":
+                assert mcp["type"] == "http"
+            else:
+                assert (root / manifest["hooks"]).is_file()
         if host == "qoder":
             assert manifest["hooks"] == "./hooks/hooks.json"
             assert manifest["mcpServers"] == "./.mcp.json"
@@ -360,7 +358,7 @@ def test_config_edit_takes_effect_on_next_hook(adapter, monkeypatch):
 
 
 def test_mcp_bridge_uses_persistent_configuration(adapter, monkeypatch):
-    require_structured_transcript_host(adapter)
+    require_host(adapter, "qoder")
     import fastmcp.server
     import fastmcp.server.providers.proxy
 
@@ -391,7 +389,10 @@ def test_recall_is_bounded_and_cannot_close_evidence_wrapper(adapter, monkeypatc
     assert "untrusted historical data" in context
     assert context.count("</reme-context>") == 1
     assert "&lt;/reme-context&gt;" in context
-    assert call.call_args.args[2] == {"query": "previous decision", "limit": 5, "min_score": 0.0}
+    expected = {"query": "previous decision"}
+    if adapter.HOST == "qoder":
+        expected.update(limit=5, min_score=0.0)
+    assert call.call_args.args[2] == expected
     assert call.call_args.args[3] == (10 if adapter.HOST == "codex" else 5)
 
 
@@ -819,7 +820,7 @@ def test_codex_localized_guidance_survives_disabled_and_failed_recall(adapter, m
     payload = {"hook_event_name": "UserPromptSubmit", "prompt": "过去的决定"}
     result = adapter.handle_event(payload)
     context = result["hookSpecificOutput"]["additionalContext"]
-    assert "长期记忆" in context and "reme_search" in context and "<reme-context" not in context
+    assert "长期记忆" in context and "search" in context and "<reme-context" not in context
     assert adapter.clean_text(context + "\nactual source") == "actual source"
     call.assert_not_called()
     write_config(adapter, {"auto_memory": False})

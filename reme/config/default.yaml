@@ -142,6 +142,7 @@ jobs:
 
   auto_dream:
     backend: base
+    hint: ""
     description: "Auto-dream: scan today's day-index and daily notes, globally extract merged units, integrate digest units, and persist the dream catalog."
     parameters:
       type: object
@@ -153,7 +154,6 @@ jobs:
         hint:
           type: string
           description: "caller guidance passed through to dream extract/integrate"
-          default: ""
         scan_days:
           type: integer
           description: "number of recent daily directories to scan, ending at date"
@@ -456,6 +456,8 @@ jobs:
 
   search:
     backend: base
+    limit: 5
+    min_score: 0.0
     description: "Hybrid workspace search (vector + BM25, RRF-fused)."
     parameters:
       type: object
@@ -466,7 +468,6 @@ jobs:
         limit:
           type: integer
           description: "max results"
-          default: 5
         min_score:
           type: number
           description: >-
@@ -474,7 +475,6 @@ jobs:
             Uses native vector or BM25 scores when only one branch has hits,
             and rank-based RRF scores (at most 1/61, about 0.01639) when both have hits.
             The scale can change per query; this is not a normalized relevance threshold.
-          default: 0.0
         tags:
           type: array
           items:
